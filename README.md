@@ -19,18 +19,48 @@ For use in the browser, use [browserify](https://github.com/substack/node-browse
 To use the module,
 
 ``` javascript
-var foo = require( 'compute-leq' );
+var leq = require( 'compute-leq' );
 ```
 
-#### foo( arr )
+#### leq( arr, x )
 
-What does this function do?
+Computes an element-wise comparison (less than or equal to) for each input `array` element. `x` may either be an `array` of equal length or a single value (`number` or `string`).
+
+The function returns an `array` with length equal to that of the input `array`. Each output `array` element is either `0` or `1`. A value of `1` means that an element is less than or equal to a compared value and `0` means that an element is __not__ less than or equal to a compared value.
+
+``` javascript
+var arr = [ 5, 3, 8, 3, 2 ],
+	out;
+
+// Single comparison value:
+out = leq( arr, 3 );
+// returns [ 0, 1, 0, 1, 1 ]
+
+// Array of comparison values:
+out = leq( arr, [ 6, 3, 6, 7, 3 ] );
+// returns [ 1, 1, 0, 1, 1 ]
+```
 
 
 ## Examples
 
 ``` javascript
-var foo = require( 'compute-leq' );
+var leq = require( 'compute-leq' ),
+	sum = require( 'compute-sum' );
+
+// Simulate some data...
+var data = new Array( 100 );
+
+for ( var i = 0; i < data.length; i++ ) {
+	data[ i ] = Math.round( Math.random()*100 );
+}
+
+var out = leq( data, 50 );
+
+// Count the number of values less than or equal to 50...
+var count = sum( out );
+
+console.log( 'Total: %d', count );
 ```
 
 To run the example code from the top-level application directory,
