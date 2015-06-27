@@ -2,7 +2,7 @@ leq
 ===
 [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][coveralls-image]][coveralls-url] [![Dependencies][dependencies-image]][dependencies-url]
 
-> Computes an element-wise comparison (less than or equal to) of an array.
+> Computes an element-wise comparison (less than or equal to).
 
 
 ## Installation
@@ -22,41 +22,65 @@ var leq = require( 'compute-leq' );
 
 #### leq( arr, x[, opts] )
 
-Computes an element-wise comparison (less than or equal to) for each input `array` element. `x` may either be an `array` of equal length or a single value (`number` or `string`).
+Computes an element-wise comparison (less than or equal to). `x` may be either a [`number`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number), [`string`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String), an [`array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array), a [`typed array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays), or a [`matrix`](https://github.com/dstructs/matrix). `y` has to be either an `array` or `matrix` of equal dimensions as `x`, a `string` or a `number`. Correspondingly, the function returns either an `array` with length equal to that of the input `array`, a `matrix` with equal dimensions as input `x` or a single value. Each output element is either `0` or `1`. A value of `1` means that an element is less than or equal to the compared value  and `0` means that an element is __not__ less than or equal to the compared value.
 
-The function returns an `array` with a length equal to that of the input `array`. Each output `array` element is either `0` or `1`. A value of `1` means that an element is less than or equal to a compared value and `0` means that an element is __not__ less than or equal to a compared value.
+```javascript
+var matrix = require( 'dstructs-matrix' ),
+    data,
+    y,
+    mat,
+    out,
+    i;
 
-``` javascript
-var arr = [ 5, 3, 8, 3, 2 ],
-	out;
+data = [ 5, 3, 8, 3, 2 ];
 
 // Single comparison value:
-out = leq( arr, 3 );
+out = leq( data, 3 );
 // returns [ 0, 1, 0, 1, 1 ]
 
+out = leq( 3, data )
+// returns [ 1, 1, 0, 1, 0 ]
+
 // Array of comparison values:
-out = leq( arr, [ 6, 3, 6, 7, 3 ] );
-// returns [ 1, 1, 0, 1, 1 ]
+out = leq( data, [ 5, 2, 8, 7, 3 ] );
+// returns [ 1, 0, 1, 1, 1 ]
+
+// Matrices
+data = new Int32Array( 9 );
+y = new Int32Array( 9 )
+for ( i = 0; i < 9; i++ ) {
+	data[ i ] = i;
+	y[ i ] = 8 - i;
+}
+mat = matrix( data, [3,3], 'float64' );
+/*
+	[ 0 1 2
+	  3 4 5
+	  6 7 8 ]
+*/
+
+// Single comparison value:
+out = leq( mat, 3 );
+/*
+	[ 1 1 1
+	  1 0 0
+	  0 0 0 ]
+*/
+
+// Matrix of comparison values:
+out = leq( mat, y );
+/*
+	[ 1 1 1
+	  1 1 0
+	  0 0 0 ]
+*/
 ```
 
 The function accepts the following `options`:
 
-*  __copy__: `boolean` indicating whether to return a new `array`. Default: `true`.
-*  __accessor__: accessor `function` for accessing values in object `arrays`.
+* 	__accessor__: accessor `function` for accessing `array` values.
+*	__copy__: `boolean` indicating if the `function` should return a new data structure. Default: `true`.
 
-To mutate the input `array` (e.g., when input values can be discarded or when optimizing memory usage), set the `copy` option to `false`.
-
-``` javascript
-var arr = [ 5, 3, 8, 3, 2 ];
-
-var out = leq( arr, 3, {
-	'copy': false
-});
-// returns [ 0, 1, 0, 1, 1 ]
-
-console.log( arr === out );
-// returns true
-```
 
 For object `arrays`, provide an accessor `function` for accessing `array` values.
 
@@ -113,27 +137,149 @@ var out = leq( data, arr, {
 
 __Note__: `j` corresponds to the input `array` index, where `j=0` is the index for the first input `array` and `j=1` is the index for the second (comparison) input `array`.
 
+By default, the function returns a new data structure. To mutate the input data structure (e.g., when input values can be discarded or when optimizing memory usage), set the `copy` option to `false`.
 
+``` javascript
+var data,
+	bool,
+	mat,
+	out,
+	i;
+
+var data = [ -10, -1, 0, 1, 10 ];
+
+var out = leq( data, 0 {
+	'copy': false
+});
+// returns [ 1, 1, 1, 0, 0 ]
+
+bool = ( data === out );
+// returns true
+
+data = new Float64Array( 6 );
+for ( i = 0; i < 6; i++ ) {
+	data[ i ] = i;
+}
+mat = matrix( data, [3,2], 'float64' );
+/*
+	[  0  1
+	   2  3
+	   4  5 ]
+*/
+
+out = leq( mat, 3, {
+	'copy': false
+});
+/*
+	[  1 1
+	   1 1
+	   0 0 ]
+*/
+
+bool = ( mat === out );
+// returns true
+```
+
+
+## Notes
+
+*	If an element is __not__ a `number` or `string`, the result of the comparison is `NaN`.
+
+	``` javascript
+		var data, out;
+
+		out = leq( null, 1 );
+		// returns NaN
+
+		out = leq( true, 1 );
+		// returns NaN
+
+		out = leq( {'a':'b'}, 1 );
+		// returns NaN
+
+		out = leq( [ true, null, [] ], 1 );
+		// returns [ NaN, NaN, NaN ]
+
+		function getValue( d, i ) {
+			return d.x;
+		}
+		data = [
+			{'x':true},
+			{'x':[]},
+			{'x':{}},
+			{'x':null}
+		];
+
+		out = leq( data, 1, {
+			'accessor': getValue
+		});
+		// returns [ NaN, NaN, NaN, NaN ]
+	```
+
+*	When calling the function with a `number` or `string` as the first argument and a `matrix` or `array` as the second argument, the `options` object is not applicable.
+
+	``` javascript
+		var out = leq( 4, [ 1, 2, 3 ], {
+			'copy': false
+		});
+		// Throws an error
+	```
 
 
 ## Examples
 
 ``` javascript
-var leq = require( 'compute-leq' ),
+var matrix = require( 'dstructs-matrix' ),
+	leq = require( 'compute-leq' ),
 	sum = require( 'compute-sum' );
 
-// Simulate some data...
-var data = new Array( 100 );
-for ( var i = 0; i < data.length; i++ ) {
+var data,
+	mat,
+	out,
+	tmp,
+	i;
+
+// Plain arrays...
+data = new Array( 100 );
+for ( i = 0; i < data.length; i++ ) {
 	data[ i ] = Math.round( Math.random()*100 );
 }
-
-var out = leq( data, 50 );
+out = leq( data, 50 );
+console.log( 'Arrays: %s\n', out );
 
 // Count the number of values less than or equal to 50...
 var count = sum( out );
 
-console.log( 'Total: %d', count );
+// Object arrays (accessors)...
+function getValue( d ) {
+	return d.x;
+}
+for ( i = 0; i < data.length; i++ ) {
+	data[ i ] = {
+		'x': data[ i ]
+	};
+}
+out = leq( data, 50, {
+	'accessor': getValue
+});
+
+// Typed arrays...
+data = new Float64Array( 100 );
+for ( i = 0; i < data.length; i++ ) {
+	data[ i ] = Math.round( Math.random()*20 );
+}
+tmp = leq( data, 50 );
+out = '';
+for ( i = 0; i < data.length; i++ ) {
+	out += tmp[ i ];
+	if ( i < data.length-1 ) {
+		out += ',';
+	}
+}
+
+// Matrices...
+mat = matrix( data, [10,10], 'float64' );
+out = leq( mat, 50 );
 ```
 
 To run the example code from the top-level application directory,
@@ -174,12 +320,12 @@ $ make view-cov
 ---
 ## License
 
-[MIT license](http://opensource.org/licenses/MIT). 
+[MIT license](http://opensource.org/licenses/MIT).
 
 
 ## Copyright
 
-Copyright &copy; 2014-2015. Athan Reines.
+Copyright &copy; 2014-2015. The [Compute.io](https://github.com/compute-io) Authors.
 
 
 [npm-image]: http://img.shields.io/npm/v/compute-leq.svg
